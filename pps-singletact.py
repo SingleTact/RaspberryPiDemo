@@ -283,7 +283,7 @@ def read_device(drawing):
 
             frame = data[0] << 8 | data[1]
             timestamp = data[2] << 8 | data[3]
-            value = data[4] << 8 | data[5]
+            value = (data[4] << 8 | data[5]) - 255
             sys.stderr.write('frame=%i timestamp=%i value=%i sec=%.2f\n' % \
                             (frame, timestamp, value, ELAPSED_TIME / float(1000)))
 
