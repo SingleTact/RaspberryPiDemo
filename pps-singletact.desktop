@@ -1,0 +1,8 @@
+
+[Desktop Entry]
+Type=Application
+Name=PPS SingleTact autostart
+Comment=PPS SingleTact
+NoDisplay=false
+Exec=python /home/pi/pps-singletact
+Name[en_US]=pps-singletact.desktop
