@@ -371,6 +371,10 @@ def stop_thread():
     READ_THREAD.join()
 
 if __name__ == '__main__':
+    for argv in sys.argv:
+        if argv == '-v':
+            OPT_VERBOSE = True
+
     window = Gtk.Window()
     window.set_position(Gtk.WindowPosition.CENTER_ALWAYS)
     window.set_default_size(WINDOW_WIDTH, WINDOW_HEIGHT)
