@@ -50,6 +50,8 @@ TOUCH_TIME = 0
 DEV_BUS = 1
 DEV_ADDRESS = 0x04
 
+OPT_VERBOSE = False
+
 # Calculate Y position based on pressure value
 value_pos = lambda value: GRAPH_Y_START + ((VALUE_MAX - value) / float(VALUE_STEP) \
                           * GRAPH_HEIGHT / float(VALUE_SPACE))
@@ -281,33 +283,50 @@ def read_device(drawing):
             # Here we read only 6 bytes from 128 to 133
             data = bus.read_i2c_block_data(DEV_ADDRESS, 0x00, 6)
 
-            frame = data[0] << 8 | data[1]
+            frameindex = data[0] << 8 | data[1]
             timestamp = data[2] << 8 | data[3]
             value = (data[4] << 8 | data[5]) - 255
-            sys.stderr.write('frame=%i timestamp=%i value=%i sec=%.2f\n' % \
-                            (frame, timestamp, value, ELAPSED_TIME / float(1000)))
 
-            # Normalize value if it exceeds the VALUE_MAX or VALUE_MIN
-            # This will prevent drawing outside the graph
-            if value > VALUE_MAX:
-                value = VALUE_MAX
-            if value < VALUE_MIN:
-                value = VALUE_MIN
+            if OPT_VERBOSE:
+                args = (frameindex, timestamp, value, ELAPSED_TIME / float(1000))
+                sys.stderr.write('frameindex=%i timestamp=%i value=%i sec=%.2f\n' % args)
+
         except IOError as e:
-            length = len(CURVES)
-            if length > 1:
-                value = CURVES[length - 1]['value']
+            if len(CURVES) > 0:
+                value = CURVES[-1]['value']
             else:
                 value = 0
-            sys.stderr.write('%s sec=%.2f\n' % (str(e), ELAPSED_TIME / float(1000)))
+
+            if OPT_VERBOSE:
+                sys.stderr.write('%s sec=%.2f\n' % (str(e), ELAPSED_TIME / float(1000)))
+
+        # Use previous value for "incorrect" data
+        if frameindex == 0xffff and timestamp == 0xffff:
+            if len(CURVES) > 0:
+                value = CURVES[-1]['value']
+            else:
+                value = 0
+
+        # Invalid frame index which is less than previous index
+        if len(CURVES) > 0:
+            if frameindex < CURVES[-1]['frameindex'] and CURVES[-1]['frameindex'] != 0xffff:
+                value = CURVES[-1]['value']
+                frameindex = CURVES[-1]['frameindex'] + 1
+
+        # Normalize value if it exceeds the VALUE_MAX or VALUE_MIN
+        # This will prevent drawing outside the graph
+        if value > VALUE_MAX:
+            value = VALUE_MAX
+        if value < VALUE_MIN:
+            value = VALUE_MIN
 
         # Append curves
-        curve = {'value': value, 'pos': GRAPH_X_START + GRAPH_WIDTH}
+        curve = {'value': value, 'frameindex': frameindex, 'pos': GRAPH_X_START + GRAPH_WIDTH}
         CURVES.append(curve)
         if len(CURVES) > CURVE_MAX:
             CURVES.pop(0)
 
-        # Apply dynamic space
+        # Apply dynamic position
         for curve in CURVES:
             curve['pos'] -= (SECOND_SPACE * INTERVAL / 1000)
 
@@ -318,7 +337,7 @@ def read_device(drawing):
                 SECONDS.pop(0)
             SECONDS.append(second)
 
-        # Apply dynamic space
+        # Apply dynamic position
         for second in SECONDS:
             second['pos'] -= (SECOND_SPACE * INTERVAL / 1000)
 
