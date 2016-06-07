@@ -18,7 +18,9 @@ try:
 except ImportError:
     pass
 
-LOGO = (
+LOGO_WIDTH = 100
+LOGO_HEIGHT = 21
+LOGO_DATA = (
 0x0c, 0x37, 0x40, 0x40, 0x0b, 0x49, 0x5c, 0x5c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x11, 0x5e, 0x72, 0x72, 0x08, 0x28, 0x2e, 0x2e, 0x00, 0x00, 0x00, 0x00,
@@ -729,9 +731,9 @@ def drawing_draw_cb(widget, cr, *args):
     cr.stroke()
 
     # Draw logo
-    image = cairo.ImageSurface.create_for_data(bytearray(LOGO), cairo.FORMAT_ARGB32, 100, 21)
-    x, y = image.get_width(), image.get_height()
-    cr.set_source_surface(image, GRAPH_X_START + GRAPH_WIDTH - x -  0.10 * x, GRAPH_Y_START + y - 0.60 * y)
+    x, y = LOGO_WIDTH, LOGO_HEIGHT
+    image = cairo.ImageSurface.create_for_data(bytearray(LOGO_DATA), cairo.FORMAT_ARGB32, x, y)
+    cr.set_source_surface(image, GRAPH_X_START + GRAPH_WIDTH - x - 10, GRAPH_Y_START + y - 10)
     cr.paint()
 
     return False
@@ -766,8 +768,11 @@ def touch_event_cb(widget, event, drawing):
     global TOUCH_BEGIN
     global TOUCH_TIME
 
+    x1, y1 = GRAPH_X_START + GRAPH_WIDTH - LOGO_WIDTH - 10, GRAPH_Y_START + LOGO_HEIGHT - 10
+    x2, y2 = x1 + LOGO_WIDTH, y1 + LOGO_HEIGHT
     coords = event.get_coords()
-    if coords[0] is True and coords[1] <= GRAPH_X_START and coords[2] <= GRAPH_X_START:
+    if coords[0] is True and (coords[1] >= x1 and coords[2] >= y1) and \
+        (coords[1] <= x2 and coords[2] <= y2):
         if event.type == Gdk.EventType.TOUCH_BEGIN:
             if TOUCH_BEGIN is False:
                 TOUCH_BEGIN = True
@@ -808,6 +813,7 @@ def read_device(drawing):
         return
 
     while THREAD_IS_RUN:
+        value, frameindex = 0, 0
         try:
             # SingleTac manual section 2.4.3 I2C Read Operation:
             # Where a Read operation is not preceded by a Read Request operation the read location defaults to
