@@ -918,7 +918,7 @@ if __name__ == '__main__':
     window.set_position(Gtk.WindowPosition.CENTER_ALWAYS)
     window.set_default_size(WINDOW_WIDTH, WINDOW_HEIGHT)
     window.set_title('PPS SingleTact Demo')
-    #window.maximize()
+    window.maximize()
     window.connect('delete-event', Gtk.main_quit)
 
     drawing = Gtk.DrawingArea()
