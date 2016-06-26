@@ -578,6 +578,7 @@ TOUCH_TIME = 0
 
 DEV_BUS = 1
 DEV_ADDRESS = 0x04
+DEV_CTX = None
 
 OPT_VERBOSE = False
 
@@ -800,17 +801,7 @@ def queue_draw(drawing):
 
 def read_device(drawing):
     global ELAPSED_TIME
-    global DEVICE_ENABLED
     global THREAD_IS_RUN
-
-    if DEVICE_ENABLED is False:
-        return
-
-    try:
-        bus = smbus.SMBus(DEV_BUS)
-    except IOError as e:
-        print e.message
-        return
 
     while THREAD_IS_RUN:
         value, frameindex = 0, 0
@@ -820,7 +811,7 @@ def read_device(drawing):
             # 128 (the sensor output location) and consecutive reads will therefore simply read the default 32 bytes
             # of the sensor data region.
             # Here we read only 6 bytes from 128 to 133
-            data = bus.read_i2c_block_data(DEV_ADDRESS, 0x00, 6)
+            data = DEV_CTX.read_i2c_block_data(DEV_ADDRESS, 0x00, 6)
 
             frameindex = data[0] << 8 | data[1]
             timestamp = data[2] << 8 | data[3]
@@ -837,7 +828,7 @@ def read_device(drawing):
                 value = 0
 
             if OPT_VERBOSE:
-                sys.stderr.write('%s sec=%.2f\n' % (str(e), ELAPSED_TIME / float(1000)))
+                sys.stderr.write('read: %s sec=%.2f\n' % (str(e), ELAPSED_TIME / float(1000)))
 
         # Use previous value for "incorrect" data
         if frameindex == 0xffff and timestamp == 0xffff:
@@ -895,9 +886,23 @@ def start_thread(drawing, restart=False):
     if restart is True:
         THREAD_IS_RUN = False
         READ_THREAD.join()
+
+        if OPT_VERBOSE:
+            sys.stderr.write('resetting baseline...\n')
+        for i in range(0,10):
+            try:
+                data = [ 0x02, 40, 2, 0, 0, 0xff ]
+                DEV_CTX.write_i2c_block_data(DEV_ADDRESS, 40, data)
+            except IOError as e:
+                if OPT_VERBOSE:
+                    sys.stderr.write('write: ' + str(e) + '\n')
+            finally:
+                break
+
     ELAPSED_TIME = 0
     SECONDS = []
     CURVES = []
+
     THREAD_IS_RUN = True
     READ_THREAD = threading.Thread(target=read_device, args=(drawing,))
     READ_THREAD.start()
@@ -914,8 +919,15 @@ if __name__ == '__main__':
         if argv == '-v':
             OPT_VERBOSE = True
 
+    try:
+        DEV_CTX = smbus.SMBus(DEV_BUS)
+    except IOError as e:
+        print e.message
+        sys.exit(1)
+
     if OPT_VERBOSE:
-        print 'sample-rate=%ims' % INTERVAL
+        print 'I2C bus=%i address=0x%x' % (DEV_BUS, DEV_ADDRESS)
+        print 'samplerate=%ims' % INTERVAL
 
     window = Gtk.Window()
     window.set_position(Gtk.WindowPosition.CENTER_ALWAYS)
