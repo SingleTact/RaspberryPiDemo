@@ -551,7 +551,7 @@ LOGO_DATA = (
 WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 480
 GRAPH_WIDTH = WINDOW_WIDTH - 75
-GRAPH_HEIGHT = WINDOW_HEIGHT - 120
+GRAPH_HEIGHT = WINDOW_HEIGHT - 60
 GRAPH_X_START = 65
 GRAPH_Y_START = 10
 INTERVAL = 100 # In ms
@@ -726,7 +726,7 @@ def drawing_draw_cb(widget, cr, *args):
     cr.set_font_size(12)
     text = 'TIME (S)'
     ext = cr.text_extents(text)
-    cr.move_to(GRAPH_X_START + GRAPH_WIDTH / 2 - ext[2] / 2, GRAPH_Y_START + GRAPH_HEIGHT + 35)
+    cr.move_to(GRAPH_X_START + GRAPH_WIDTH / 2 - ext[2] / 2, GRAPH_Y_START + GRAPH_HEIGHT + 40)
     cr.show_text(text)
     cr.stroke()
 
@@ -918,7 +918,7 @@ if __name__ == '__main__':
     window.set_position(Gtk.WindowPosition.CENTER_ALWAYS)
     window.set_default_size(WINDOW_WIDTH, WINDOW_HEIGHT)
     window.set_title('PPS SingleTact Demo')
-    window.maximize()
+    window.fullscreen()
     window.connect('delete-event', Gtk.main_quit)
 
     drawing = Gtk.DrawingArea()
