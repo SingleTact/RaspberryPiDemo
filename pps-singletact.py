@@ -914,6 +914,9 @@ if __name__ == '__main__':
         if argv == '-v':
             OPT_VERBOSE = True
 
+    if OPT_VERBOSE:
+        print 'sample-rate=%ims' % INTERVAL
+
     window = Gtk.Window()
     window.set_position(Gtk.WindowPosition.CENTER_ALWAYS)
     window.set_default_size(WINDOW_WIDTH, WINDOW_HEIGHT)
