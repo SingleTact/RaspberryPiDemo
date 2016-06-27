@@ -881,9 +881,10 @@ def start_thread(drawing, restart=False):
 
         if OPT_VERBOSE:
             sys.stderr.write('resetting baseline...\n')
-        for i in range(0,10):
+        for i in range(0,2):
             try:
-                data = [ 0x02, 40, 2, 0, 0, 0xff ]
+                data = DEV_CTX.read_i2c_block_data(DEV_ADDRESS, 0, 6)
+                data = [ 0x02, 40, 2, data[4], data[5], 0xff ]
                 DEV_CTX.write_i2c_block_data(DEV_ADDRESS, 40, data)
             except IOError as e:
                 if OPT_VERBOSE:
