@@ -693,23 +693,15 @@ def drawing_draw_cb(widget, cr, *args):
         cr.set_source_rgba(0x00, 0xff, 0x00, 0.15) # With alpha channel
         if SECONDS[0]['value'] == 0 and SECONDS[0]['pos'] >= GRAPH_X_START:
             x_pos = SECONDS[0]['pos']
-        else:
-            x_pos = GRAPH_X_START
-        if SECONDS[0]['value'] == 0:
             width = GRAPH_X_START + GRAPH_WIDTH - SECONDS[0]['pos']
         else:
+            x_pos = GRAPH_X_START
             width = GRAPH_WIDTH
         cr.rectangle(x_pos, value_pos(500), width, value_pos(0) - value_pos(500))
         cr.fill()
         cr.stroke()
 
     # Draw curve
-    #if DEVICE_ENABLED is False:
-    #    curve = {'pos': GRAPH_X_START + GRAPH_WIDTH, 'value': random.Random().randint(-50, 100)}
-    #    CURVES.append(curve)
-    #    if len(CURVES) > CURVE_MAX:
-    #        CURVES.pop(0)
-
     cr.set_line_width(1.75)
     cr.set_source_rgba(0x00, 0x00, 0xff)
     length = len(CURVES)
