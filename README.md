@@ -31,13 +31,22 @@ Or by mouse triple clicks or by SPACE key (keyboard)
 AUTORUN
 =======
 
-Make sure autologin has been enabled for 'pi' user.
-To enable this, goto:
-
-Menu -> Preferences -> Raspberry Pi Configuration -> Auto login
-
-Then, copy the pps-singletact.desktop file into /home/pi/.config/autostart
+append this to /etc/profile
 
 ```
-$ cp pps-singletact.desktop /home/pi/.config/autostart
+$ echo "sudo python pps-singletact.py" | sudo tee -a /etc/profile
 ```
+To exit after autorun you must open up a new virtual terminal by pressing Ctrl + alt + f1
+then 
+
+```
+$ sudo top
+
+```
+kill the python process, usually press k enter and then 9.
+
+then return to desktop with Ctrl + alt + f7
+
+
+
+
