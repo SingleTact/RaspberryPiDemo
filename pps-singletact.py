@@ -27,7 +27,7 @@ GRAPH_WIDTH = WINDOW_WIDTH - 75
 GRAPH_HEIGHT = WINDOW_HEIGHT - 60
 GRAPH_X_START = 65
 GRAPH_Y_START = 10
-INTERVAL = 10 # In ms
+INTERVAL = 25 # In ms
 ELAPSED_TIME = 0
 
 
@@ -269,17 +269,15 @@ def queue_draw(drawing):
 def read_device(drawing):
     global ELAPSED_TIME
     global THREAD_IS_RUN
-    prev_good_value = 0
-    prev_frame_value, prev_frame_index = 0, 0
     prev=[0,0,0,0,0];
     timecount=-5;
-    pt=lambda: int(round(time.time()*1000))
-    pt=pt()-5000
+    prev_time=lambda: int(round(time.time()*1000))
+    prev_time=prev_time()-5000
     timestamp=1
     
     while THREAD_IS_RUN:
         value, frameindex = 0, 0
-        ct=lambda: int(round(time.time()*1000))
+        cur_time=lambda: int(round(time.time()*1000))
         
         try:
             # SingleTac manual section 2.4.3 I2C Read Operation:
@@ -297,49 +295,33 @@ def read_device(drawing):
             
                
         except IOError as e:
-            if len(CURVES) > 0:
-                value = CURVES[-1]['value']
-            else:
-                value = prev_good_value
-                timestamp=1
-                
-        if frameindex == 0xffff and timestamp == 0xffff:
-            if len(CURVES) > 0:
-                value = prev_good_value
-            else:
-                value = 0
+            continue
+      
+        if frameindex == 0xffff and timestamp == 0xffff: #i2c read error
+            continue   
+        if value > 768: #out of bounds
+            continue
 
-        else:
-            prev_frame_index = frameindex
-            prev_frame_value = value
-
-            
-        
-        if value > 768:
-            if len(CURVES) > 0:
-                continue                
-            else:
-                value = 0
-        elif value <=1: 
+        elif value <=1 and value >=-1: #reads of 0 or 1 can also be invalid
             if len(CURVES)>0:
                 prev.pop(0)
                 prev.append(value)
-                if max(prev) <=1:
-                    prev_good_value=0
-                else:
+                #if previous 5 reads have been near 0, then unlikely to be error
+                if not (max(prev) <=1 and max(prev) >=-1 and min(prev) >=-1):
                     continue
-                value=prev_good_value
             else:
                 value=0
+                prev.pop(0)
+                prev.append(0)
+
         else:
-            prev_good_value = value
             prev.pop(0)
             prev.append(value)
 
 
-        if OPT_VERBOSE:
-            args = (frameindex, timestamp, value, prev_good_value,test,ELAPSED_TIME / float(1000))
-            sys.stderr.write('frameindex=%i timestamp=%i value=%i prev_good=%i test=%i sec=%.2f\n' % args)
+        if OPT_VERBOSE: #debug, launch in terminal with -v
+            args = (frameindex, timestamp, value,ELAPSED_TIME / float(1000))
+            sys.stderr.write('frameindex=%i timestamp=%i value=%i sec=%.2f\n' % args)
 
 
 
@@ -361,8 +343,8 @@ def read_device(drawing):
             curve['pos'] -= (SECOND_SPACE * INTERVAL / 500)#1000
 
         # Append seconds
-        if ct() >= pt + 5000:#if 5 seconds have passed
-            pt=ct()
+        if cur_time() >= prev_time + 5000:#if 5 seconds have passed
+            prev_time=cur_time()
             timecount =timecount +5
             second = {'pos': GRAPH_X_START + GRAPH_WIDTH, 'value': timecount}
             if len(SECONDS) > SECOND_MAX:
