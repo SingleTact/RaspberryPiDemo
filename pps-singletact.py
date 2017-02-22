@@ -11,6 +11,12 @@ import time
 import random
 import threading
 from logo import *
+import subprocess
+
+
+
+
+
 
 DEVICE_ENABLED = False
 try:
@@ -19,10 +25,14 @@ try:
 except ImportError:
     pass
 
+def get_screen_resolution():
+    output = subprocess.Popen('xrandr | grep "\*" | cut -d" " -f4',shell=True, stdout=subprocess.PIPE).communicate()[0]
+    resolution = output.split()[0].split(b'x')
+    return (resolution)
 
-
-WINDOW_WIDTH = 800
-WINDOW_HEIGHT = 480
+res =get_screen_resolution()
+WINDOW_WIDTH = int(res[0])
+WINDOW_HEIGHT = int(res[1])
 GRAPH_WIDTH = WINDOW_WIDTH - 75
 GRAPH_HEIGHT = WINDOW_HEIGHT - 60
 GRAPH_X_START = 65
@@ -60,6 +70,8 @@ OPT_VERBOSE = False
 # Calculate Y position based on pressure value
 value_pos = lambda value: GRAPH_Y_START + ((VALUE_MAX - value) / float(VALUE_STEP) \
                           * GRAPH_HEIGHT / float(VALUE_SPACE))
+
+
 
 # Draw callback
 # Don't do any time related calculation here!
